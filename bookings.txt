@@ -1,0 +1,10 @@
+Booking ID: B001
+CustomerID: C001
+PackageID: P001
+Date: 2025-6-13
+------------------------
+Booking ID: B002
+CustomerID: C002
+PackageID: P003
+Date: 2025-7-13
+------------------------

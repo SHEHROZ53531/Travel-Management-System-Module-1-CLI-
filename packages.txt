@@ -1,0 +1,15 @@
+ID: P001
+Destination: Lahore
+DurationDays: 6
+Price: 120009.0
+------------------------
+ID: P002
+Destination: lahore
+DurationDays: 3
+Price: 123000.0
+------------------------
+ID: P003
+Destination: Naran-kgahan
+DurationDays: 5
+Price: 125000.0
+------------------------

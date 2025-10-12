@@ -1,0 +1,10 @@
+ID: C001
+Name: Basit ali
+Phone: 123456
+Email: basit11@gmail.com
+------------------------
+ID: C002
+Name: arbaz
+Phone: 2098765
+Email: arbaz123@gmail.com
+------------------------
