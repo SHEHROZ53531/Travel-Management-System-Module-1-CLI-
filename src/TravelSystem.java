@@ -3,42 +3,70 @@ import java.util.*;
 
 /**
  * Core system: holds lists, interactive methods, and file handling.
- * NOTE: Assumes existence of Customer, TravelPackage, Booking, and Person classes.
  */
 public class TravelSystem {
     private List<TravelPackage> packages = new ArrayList<>();
     private List<Customer> customers = new ArrayList<>();
     private List<Booking> bookings = new ArrayList<>();
+    private List<User> users = new ArrayList<>(); 
 
     // filenames (using final for constants)
     private final String PACK_FILE = "packages.txt";
     private final String CUST_FILE = "customers.txt";
     private final String BOOK_FILE = "bookings.txt";
+    private final String USER_FILE = "users.txt"; 
 
-    // simple counters for ids
+    // counters for ids
     private int pkgCounter = 1;
     private int custCounter = 1;
     private int bookCounter = 1;
+
+    /* ------------------ Authentication & Registration ------------------ */
+
+    public boolean authenticate(String username, String password) {
+        for (User u : users) {
+            if (u.getUsername().equals(username) && u.getPassword().equals(password)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    // User registration method
+    public boolean registerUser(String username, String password) {
+        // Check if user already exists
+        for (User u : users) {
+            if (u.getUsername().equals(username)) {
+                return false; // User already exists
+            }
+        }
+        // Add new user
+        users.add(new User(username, password));
+        // Save data immediately after registration to persist the new user
+        saveAll(); 
+        return true; // Registration successful
+    }
 
     /* ------------------ Interactive (menu) helpers ------------------ */
 
     public void addPackageInteractive(Scanner sc) {
         System.out.println("--- Add New Travel Package ---");
-        try { // Exception Handling for number parsing
+        try {
             System.out.print("Destination: ");
             String dest = sc.nextLine().trim();
             System.out.print("Duration in days (number): ");
             int dur = Integer.parseInt(sc.nextLine().trim());
             System.out.print("Price: ");
             double price = Double.parseDouble(sc.nextLine().trim());
-
+            
             String id = String.format("P%03d", pkgCounter++);
             TravelPackage tp = new TravelPackage(id, dest, dur, price);
             packages.add(tp);
-            // CONCISE FEEDBACK
-            System.out.println("✅ Package " + id + " added successfully: " + dest + ".");
+            System.out.println(" Package " + id + " added successfully: " + dest + ".");
         } catch (NumberFormatException e) {
-            System.out.println("❌ Invalid number entry for duration or price. Package not added.");
+            System.out.println(" Invalid number entry for duration or price. Package not added.");
+        } catch (Exception e) {
+            System.out.println(" An error occurred. Package not added.");
         }
     }
 
@@ -53,18 +81,21 @@ public class TravelSystem {
 
     public void registerCustomerInteractive(Scanner sc) {
         System.out.println("--- Register New Customer ---");
-        System.out.print("Customer name: ");
-        String name = sc.nextLine().trim();
-        System.out.print("Phone: ");
-        String phone = sc.nextLine().trim();
-        System.out.print("Email: ");
-        String email = sc.nextLine().trim();
-
-        String id = String.format("C%03d", custCounter++);
-        Customer c = new Customer(id, name, phone, email);
-        customers.add(c);
-        // CONCISE FEEDBACK
-        System.out.println("✅ Customer " + id + " registered successfully: " + name + ".");
+        try {
+            System.out.print("Customer name: ");
+            String name = sc.nextLine().trim();
+            System.out.print("Phone: ");
+            String phone = sc.nextLine().trim();
+            System.out.print("Email: ");
+            String email = sc.nextLine().trim();
+            
+            String id = String.format("C%03d", custCounter++);
+            Customer c = new Customer(id, name, phone, email);
+            customers.add(c);
+            System.out.println(" Customer " + id + " registered successfully: " + name + ".");
+        } catch (Exception e) {
+             System.out.println(" An error occurred during customer registration.");
+        }
     }
 
     public void viewCustomers() {
@@ -79,25 +110,23 @@ public class TravelSystem {
     public void createBookingInteractive(Scanner sc) {
         System.out.println("--- Create New Booking ---");
         if (customers.isEmpty() || packages.isEmpty()) {
-            System.out.println("❌ Cannot create booking. Need at least one customer and one package.");
+            System.out.println(" Cannot create booking. Need at least one customer and one package.");
             return;
         }
 
-        // List customers simply for selection
         System.out.println("--- Available Customers (ID | Name):");
         for (Customer c : customers) System.out.println("  " + c.getId() + " | " + c.getName());
         System.out.print("Enter Customer ID: ");
         String cid = sc.nextLine().trim();
         Customer selectedCustomer = findCustomerById(cid);
-        if (selectedCustomer == null) { System.out.println("❌ Customer not found for ID: " + cid); return; }
+        if (selectedCustomer == null) { System.out.println(" Customer not found for ID: " + cid); return; }
 
-        // List packages simply for selection
         System.out.println("\n--- Available Packages (ID | Destination | Price):");
         for (TravelPackage p : packages) System.out.println("  " + p.getId() + " | " + p.getDestination() + " | " + String.format("%.2f", p.getPrice()));
         System.out.print("Enter Package ID: ");
         String pid = sc.nextLine().trim();
         TravelPackage selectedPackage = findPackageById(pid);
-        if (selectedPackage == null) { System.out.println("❌ Package not found for ID: " + pid); return; }
+        if (selectedPackage == null) { System.out.println(" Package not found for ID: " + pid); return; }
 
         System.out.print("Booking date (YYYY-MM-DD): ");
         String date = sc.nextLine().trim();
@@ -105,8 +134,7 @@ public class TravelSystem {
         String id = String.format("B%03d", bookCounter++);
         Booking b = new Booking(id, cid, pid, date);
         bookings.add(b);
-        // CONCISE FEEDBACK
-        System.out.println("✅ Booking " + id + " created for " + selectedCustomer.getName() + " on package to " + selectedPackage.getDestination() + ".");
+        System.out.println(" Booking " + id + " created for " + selectedCustomer.getName() + " on package to " + selectedPackage.getDestination() + ".");
     }
 
     public void viewBookings() {
@@ -149,6 +177,7 @@ public class TravelSystem {
         saveListToFile(PACK_FILE, packagesToSaveBlocks());
         saveListToFile(CUST_FILE, customersToSaveBlocks());
         saveListToFile(BOOK_FILE, bookingsToSaveBlocks());
+        saveListToFile(USER_FILE, usersToSaveBlocks()); 
     }
 
     private List<String> packagesToSaveBlocks() {
@@ -174,6 +203,15 @@ public class TravelSystem {
         }
         return all;
     }
+    
+    private List<String> usersToSaveBlocks() {
+        List<String> all = new ArrayList<>();
+        for (User u : users) {
+            all.add(u.toSaveString());
+        }
+        return all;
+    }
+
 
     private void saveListToFile(String filename, List<String> blocks) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(filename))) {
@@ -210,10 +248,23 @@ public class TravelSystem {
             if (bk != null) bookings.add(bk);
         }
 
+        // load users
+        List<List<String>> ublocks = readBlocksFromFile(USER_FILE);
+        users.clear();
+        for (List<String> b : ublocks) {
+            User u = User.fromBlock(b);
+            if (u != null) users.add(u);
+        }
+        
+        // --- REMOVED DEFAULT USER CREATION ---
+        // Ab agar users.txt file khali ya maujood nahi hai, toh user ko Sign Up karna padega.
+
+
         // update counters so new IDs don't clash
         updateCounters();
         System.out.println("Data loaded: " + packages.size() + " packages, " +
-                customers.size() + " customers, " + bookings.size() + " bookings.");
+                customers.size() + " customers, " + bookings.size() + " bookings, " +
+                users.size() + " users.");
     }
 
     // Reads file and splits into blocks separated by the line with ----
